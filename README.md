@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Python](https://img.shields.io/badge/python-3.12-blue.svg)
 
 这是一个基于 Python/PyQt6 开发的比特浏览器（BitBrowser）自动化管理工具，支持批量创建窗口、自动分配代理、自动化提取 SheerID 验证链接以及账号资格检测等功能。
-
+注意：后续有任何二开版本，只要是网页版，数据必然流经他人服务器，切勿将自己账号密码输入他人网页！！！
 ---
 
 ## 📢 广告 / Advertisement
@@ -83,10 +83,10 @@ http://user:pass@host:port
 | 💬 **Telegram 群组** | 🐧 **QQ 交流群** |
 | :---: | :---: |
 | [点击加入 / Join](https://t.me/+9zd3YE16NCU3N2Fl) | **QQ群号: 330544197** |
-| ![Telegram QR](Telegram.jpg) | ![QQ QR](QQ.jpg) |
+| ![Telegram QR](Telegram.png) | ![QQ QR](QQ.jpg) |
 
 👤 **联系开发者**: QQ 2738552008
-
+赞赏：![赞赏码](zanshang.jpg)
 ---
 
 ## ⚠️ 免责声明 (Disclaimer)
