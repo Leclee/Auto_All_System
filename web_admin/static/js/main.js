@@ -19,6 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnCancelExport').addEventListener('click', hideExportModal);
     document.getElementById('btnConfirmImport').addEventListener('click', confirmImport);
     document.getElementById('btnCancelImport').addEventListener('click', hideImportModal);
+    
+    // 分隔符选择器事件
+    document.getElementById('importSeparator').addEventListener('change', function() {
+        const customInput = document.getElementById('customSeparator');
+        if (this.value === 'custom') {
+            customInput.style.display = 'inline-block';
+            customInput.focus();
+        } else {
+            customInput.style.display = 'none';
+        }
+    });
 });
 
 function fetchAccounts() {
@@ -221,7 +232,17 @@ function confirmImport() {
         return;
     }
     
-    const separator = document.getElementById('importSeparator').value;
+    let separator = document.getElementById('importSeparator').value;
+    
+    // 如果选择了自定义，使用自定义输入框的值
+    if (separator === 'custom') {
+        separator = document.getElementById('customSeparator').value;
+        if (!separator) {
+            alert('请输入自定义分隔符！');
+            return;
+        }
+    }
+    
     const status = document.getElementById('importStatus').value;
     
     fetch('/api/import', {
