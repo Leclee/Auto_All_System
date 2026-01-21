@@ -11,7 +11,12 @@ SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-# 初始化核心模块（尝试新路径，失败则用旧路径）
+# 确保_legacy目录也在路径中（兼容旧模块）
+LEGACY_DIR = os.path.join(SRC_DIR, '_legacy')
+if LEGACY_DIR not in sys.path:
+    sys.path.insert(0, LEGACY_DIR)
+
+# 初始化核心模块
 try:
     from core.database import DBManager
 except ImportError:
@@ -26,14 +31,18 @@ def run_gui():
     """
     from PyQt6.QtWidgets import QApplication
     
-    # 尝试新路径，失败则用旧路径
+    # 使用新的主窗口
     try:
-        from google.frontend import BrowserWindowCreatorGUI
+        from gui.main_window import MainWindow
     except ImportError:
-        from create_window_gui import BrowserWindowCreatorGUI
+        # 回退到旧版
+        try:
+            from google.frontend import BrowserWindowCreatorGUI as MainWindow
+        except ImportError:
+            from create_window_gui import BrowserWindowCreatorGUI as MainWindow
     
     app = QApplication(sys.argv)
-    window = BrowserWindowCreatorGUI()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
 
@@ -46,14 +55,10 @@ def run_web_admin(port=8080):
     try:
         from web.server import run_server
     except ImportError:
-        # 兼容旧路径
         try:
-            _dist_path = os.path.join(os.path.dirname(SRC_DIR), 'dist')
-            if _dist_path not in sys.path:
-                sys.path.insert(0, _dist_path)
             from web_admin.server import run_server
         except ImportError:
-            print("[ERROR] Web Admin模块未找到")
+            print("[警告] web_admin 模块导入失败: No module named 'web_admin'")
             return
     
     run_server(port)
@@ -79,3 +84,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

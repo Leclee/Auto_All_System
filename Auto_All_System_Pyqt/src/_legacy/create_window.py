@@ -203,7 +203,7 @@ def read_accounts(file_path: str) -> list:
 
 def get_browser_list(page: int = 0, pageSize: int = 50):
     """
-    获取所有窗口列表（使用新API）
+    获取所有窗口列表
     
     Args:
         page: 页码，默认为0
@@ -213,17 +213,27 @@ def get_browser_list(page: int = 0, pageSize: int = 50):
         窗口列表
     """
     try:
-        api = get_api()
-        result = api.list_browsers(page=page, page_size=pageSize)
+        json_data = {
+            "page": page,
+            "pageSize": pageSize
+        }
+        response = requests.post(
+            f"{url}/browser/list",
+            json=json_data,
+            headers=headers,
+            timeout=10
+        )
+        result = response.json()
         
-        if result['success']:
-            data = result['data']
+        if result.get('success'):
+            data = result.get('data', {})
             if isinstance(data, list):
                 return data
             elif isinstance(data, dict):
                 return data.get('list', [])
         return []
-    except Exception:
+    except Exception as e:
+        print(f"获取浏览器列表失败: {e}")
         return []
 
 
@@ -472,8 +482,13 @@ def create_browser_window(account: dict, reference_browser_id: str = None, proxy
             return None, f"该账号已有对应窗口: {b.get('name')} (ID: {b.get('id')})"
 
     try:
-        api = get_api()
-        res = api._request('browser/update', json_data)
+        # 创建窗口
+        res = requests.post(
+            f"{url}/browser/update",
+            json=json_data,
+            headers=headers,
+            timeout=30
+        ).json()
         
         if res.get('success'):
             browser_id = res.get('data', {}).get('id')
@@ -502,7 +517,12 @@ def create_browser_window(account: dict, reference_browser_id: str = None, proxy
                     update_data['faSecretKey'] = account['2fa_secret'].strip()
                 
                 try:
-                    update_res = api._request('browser/update/partial', update_data)
+                    update_res = requests.post(
+                        f"{url}/browser/update/partial",
+                        json=update_data,
+                        headers=headers,
+                        timeout=10
+                    ).json()
                     
                     if not update_res.get('success'):
                         if 'faSecretKey' in update_data:
@@ -511,7 +531,12 @@ def create_browser_window(account: dict, reference_browser_id: str = None, proxy
                                 'userName': account['email'],
                                 'password': account['password']
                             }
-                            api._request('browser/update/partial', retry_data)
+                            requests.post(
+                                f"{url}/browser/update/partial",
+                                json=retry_data,
+                                headers=headers,
+                                timeout=10
+                            )
                 except Exception:
                     pass
             
@@ -523,7 +548,12 @@ def create_browser_window(account: dict, reference_browser_id: str = None, proxy
                             'ids': [browser_id],
                             'faSecretKey': account['2fa_secret'].strip()
                         }
-                        api._request('browser/update/partial', twofa_data)
+                        requests.post(
+                            f"{url}/browser/update/partial",
+                            json=twofa_data,
+                            headers=headers,
+                            timeout=10
+                        )
                     except Exception:
                         pass
             
@@ -542,6 +572,7 @@ def create_browser_window(account: dict, reference_browser_id: str = None, proxy
         
     except Exception as e:
         return None, f"请求异常: {str(e)}"
+
 
 
 def print_browser_info(browser_id: str):
