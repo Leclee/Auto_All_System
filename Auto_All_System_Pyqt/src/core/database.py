@@ -1182,3 +1182,101 @@ class DBManager:
 
         t = threading.Thread(target=_run_import, daemon=True)
         t.start()
+    
+    # ==================== 系统设置管理 ====================
+    
+    @staticmethod
+    def get_setting(key: str, default: str = None) -> str:
+        """
+        @brief 获取设置值
+        @param key 设置键名
+        @param default 默认值
+        @return 设置值
+        """
+        with lock:
+            conn = DBManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            conn.close()
+            return row['value'] if row else default
+    
+    @staticmethod
+    def set_setting(key: str, value: str, description: str = None):
+        """
+        @brief 设置值
+        @param key 设置键名
+        @param value 设置值
+        @param description 描述
+        """
+        with lock:
+            conn = DBManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO settings (key, value, description, updated_at)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            """, (key, value, description))
+            conn.commit()
+            conn.close()
+    
+    @staticmethod
+    def get_all_settings() -> dict:
+        """
+        @brief 获取所有设置
+        @return 设置字典
+        """
+        with lock:
+            conn = DBManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value, description FROM settings")
+            rows = cursor.fetchall()
+            conn.close()
+            return {row['key']: row['value'] for row in rows}
+    
+    @staticmethod
+    def delete_setting(key: str):
+        """
+        @brief 删除设置
+        @param key 设置键名
+        """
+        with lock:
+            conn = DBManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM settings WHERE key = ?", (key,))
+            conn.commit()
+            conn.close()
+    
+    # ==================== 操作日志管理 ====================
+    
+    @staticmethod
+    def add_log(operation_type: str, target_email: str = None, details: str = None, status: str = 'success'):
+        """
+        @brief 添加操作日志
+        """
+        with lock:
+            conn = DBManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO operation_logs (operation_type, target_email, details, status)
+                VALUES (?, ?, ?, ?)
+            """, (operation_type, target_email, details, status))
+            conn.commit()
+            conn.close()
+    
+    @staticmethod
+    def get_recent_logs(limit: int = 100) -> list:
+        """
+        @brief 获取最近日志
+        """
+        with lock:
+            conn = DBManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM operation_logs 
+                ORDER BY created_at DESC 
+                LIMIT ?
+            """, (limit,))
+            rows = cursor.fetchall()
+            conn.close()
+            return [dict(row) for row in rows]
+

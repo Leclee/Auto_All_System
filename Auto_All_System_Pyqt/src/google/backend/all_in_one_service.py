@@ -17,8 +17,8 @@ def process_all_in_one(
     """
     @brief 处理单个浏览器的全自动流程
     @param browser_id 浏览器ID
-    @param api_key SheerID验证API Key
-    @param card_info 卡信息
+    @param api_key SheerID验证API Key（为空则从数据库获取）
+    @param card_info 卡信息（为空则从数据库获取）
     @param log_callback 日志回调
     @return (success, final_status, message)
            final_status: 'subscribed' | 'verified' | 'link_ready' | 'ineligible' | 'error'
@@ -35,9 +35,21 @@ def process_all_in_one(
         from core.database import DBManager
         from google.backend.google_auth import ensure_google_login, check_google_one_status
         from google.backend.sheerid_verifier import SheerIDVerifier
-        from google.backend.bind_card_service import auto_bind_card
+        from google.backend.bind_card_service import auto_bind_card, get_card_from_db
     except ImportError as e:
         return False, 'error', f"导入失败: {e}"
+    
+    # 从数据库获取API Key（如果未提供）
+    if not api_key:
+        api_key = DBManager.get_setting('sheerid_api_key', '')
+        if api_key:
+            log("🔑 已从数据库获取API Key")
+    
+    # 从数据库获取卡片（如果未提供）
+    if card_info is None:
+        card_info = get_card_from_db()
+        if card_info:
+            log(f"💳 已从数据库获取卡片: {card_info['number'][:4]}****")
     
     # 获取账号信息
     account_info = None

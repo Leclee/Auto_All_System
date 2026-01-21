@@ -8,13 +8,39 @@ from typing import Tuple, Optional, Callable
 from playwright.async_api import async_playwright, Page
 
 
-# 默认测试卡信息
-DEFAULT_CARD = {
-    'number': '5481087170529907',
-    'exp_month': '01',
-    'exp_year': '32',
-    'cvv': '536'
-}
+def get_card_from_db() -> dict:
+    """
+    @brief 从数据库获取可用的卡片信息
+    @return 卡信息字典，若无可用卡则返回None
+    """
+    try:
+        from core.database import DBManager
+        cards = DBManager.get_available_cards()
+        if cards:
+            card = cards[0]
+            return {
+                'id': card.get('id'),
+                'number': card.get('card_number', ''),
+                'exp_month': card.get('exp_month', ''),
+                'exp_year': card.get('exp_year', ''),
+                'cvv': card.get('cvv', ''),
+                'zip_code': card.get('zip_code', ''),
+            }
+    except Exception as e:
+        print(f"[BindCard] 获取卡片失败: {e}")
+    return None
+
+
+def update_card_usage(card_id: int):
+    """
+    @brief 更新卡片使用次数
+    @param card_id 卡片ID
+    """
+    try:
+        from core.database import DBManager
+        DBManager.increment_card_usage(card_id)
+    except Exception as e:
+        print(f"[BindCard] 更新卡片使用次数失败: {e}")
 
 
 async def auto_bind_card(page: Page, card_info: dict = None, account_info: dict = None) -> Tuple[bool, str]:
@@ -25,8 +51,11 @@ async def auto_bind_card(page: Page, card_info: dict = None, account_info: dict 
     @param account_info 账号信息(用于登录)
     @return (success, message)
     """
+    # 优先从数据库获取卡片
     if card_info is None:
-        card_info = DEFAULT_CARD
+        card_info = get_card_from_db()
+        if card_info is None:
+            return False, "数据库中无可用卡片，请先在Web管理界面导入卡片"
     
     try:
         print("[BindCard] 开始自动绑卡流程...")
