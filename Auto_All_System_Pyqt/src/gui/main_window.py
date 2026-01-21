@@ -535,16 +535,10 @@ class MainWindow(QMainWindow):
         """刷新浏览器列表"""
         self.log("正在刷新窗口列表...")
         try:
-            # 导入比特浏览器API
-            try:
-                from create_window import get_browser_list
-            except ImportError:
-                from core.bit_api import BitBrowserAPI
-                def get_browser_list(page=0, pageSize=1000):
-                    api = BitBrowserAPI()
-                    return api.list_browsers(page=page, page_size=pageSize).get('data', {}).get('list', [])
+            from core.bit_api import get_browser_list_simple
             
-            browsers = get_browser_list(page=0, pageSize=1000)
+            browsers = get_browser_list_simple(page=0, page_size=1000)
+
             
             self.browser_table.setRowCount(0)
             
@@ -605,18 +599,76 @@ class MainWindow(QMainWindow):
     
     def _open_selected_browsers(self):
         """打开选中的浏览器"""
-        self.log("正在打开选中的窗口...")
-        # TODO: 实现打开逻辑
+        selected_ids = self._get_selected_browser_ids()
+        if not selected_ids:
+            QMessageBox.information(self, "提示", "请先选择要打开的窗口")
+            return
+        
+        self.log(f"正在打开 {len(selected_ids)} 个窗口...")
+        
+        from core.bit_api import open_browsers_batch
+        
+        def on_open(browser_id, success, message):
+            if success:
+                self.log(f"  ✅ 打开成功: {browser_id[:16]}...")
+            else:
+                self.log(f"  ❌ 打开失败: {message}")
+            QApplication.processEvents()
+        
+        success_count, total = open_browsers_batch(selected_ids, callback=on_open)
+        self.log(f"打开完成，成功 {success_count}/{total} 个")
     
     def _delete_selected_browsers(self):
         """删除选中的浏览器"""
+        selected_ids = self._get_selected_browser_ids()
+        if not selected_ids:
+            QMessageBox.information(self, "提示", "请先选择要删除的窗口")
+            return
+        
         reply = QMessageBox.question(
-            self, "确认删除", "确定要删除选中的窗口吗？",
+            self, "确认删除", f"确定要删除选中的 {len(selected_ids)} 个窗口吗？\n此操作不可恢复！",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        if reply == QMessageBox.StandardButton.Yes:
-            self.log("正在删除选中的窗口...")
-            # TODO: 实现删除逻辑
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        
+        self.log(f"正在删除 {len(selected_ids)} 个窗口...")
+        
+        from core.bit_api import delete_browsers_batch
+        from core.database import DBManager
+        
+        def on_delete(browser_id, success, message):
+            if success:
+                self.log(f"  ✅ 删除成功: {browser_id[:16]}...")
+                # 清除数据库中对应账号的browser_id
+                try:
+                    accounts = DBManager.get_all_accounts()
+                    for acc in accounts:
+                        if acc.get('browser_id') == browser_id:
+                            DBManager.update_account_browser_id(acc['email'], '')
+                            break
+                except:
+                    pass
+            else:
+                self.log(f"  ❌ 删除失败: {message}")
+            QApplication.processEvents()
+        
+        success_count, total = delete_browsers_batch(selected_ids, callback=on_delete)
+        self.log(f"删除完成，成功 {success_count}/{total} 个")
+        self._refresh_browser_list()
+        self._check_files()
+    
+    def _get_selected_browser_ids(self) -> list:
+        """获取选中的浏览器ID列表"""
+        selected = []
+        for row in range(self.browser_table.rowCount()):
+            chk_item = self.browser_table.item(row, 0)
+            if chk_item and chk_item.checkState() == Qt.CheckState.Checked:
+                id_item = self.browser_table.item(row, 3)  # 窗口ID在第4列
+                if id_item:
+                    selected.append(id_item.text())
+        return selected
+
     
     def _start_creation_template(self):
         """使用模板创建窗口"""

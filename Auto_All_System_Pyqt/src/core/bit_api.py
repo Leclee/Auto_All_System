@@ -607,6 +607,108 @@ def deleteBrowser(browser_id: str) -> Dict:
     return get_api().delete_browser(browser_id)
 
 
+# ==================== GUI便捷函数 ====================
+
+def get_browser_list_simple(page: int = 0, page_size: int = 1000) -> List[Dict]:
+    """
+    @brief 获取浏览器列表（简化版）
+    @param page 页码
+    @param page_size 每页数量
+    @return 浏览器列表
+    """
+    result = get_api().list_browsers(page=page, page_size=page_size)
+    if result.get('success'):
+        data = result.get('data', {})
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict):
+            return data.get('list', [])
+    return []
+
+
+def open_browsers_batch(browser_ids: List[str], callback=None) -> tuple:
+    """
+    @brief 批量打开浏览器
+    @param browser_ids 窗口ID列表
+    @param callback 回调函数 callback(browser_id, success, message)
+    @return (success_count, total_count)
+    """
+    api = get_api()
+    success_count = 0
+    
+    for browser_id in browser_ids:
+        result = api.open_browser(browser_id, queue=True)
+        success = result.get('success', False)
+        message = result.get('msg', '') if not success else ''
+        
+        if success:
+            success_count += 1
+        
+        if callback:
+            callback(browser_id, success, message)
+    
+    return success_count, len(browser_ids)
+
+
+def delete_browsers_batch(browser_ids: List[str], callback=None) -> tuple:
+    """
+    @brief 批量删除浏览器
+    @param browser_ids 窗口ID列表
+    @param callback 回调函数 callback(browser_id, success, message)
+    @return (success_count, total_count)
+    """
+    api = get_api()
+    success_count = 0
+    
+    for browser_id in browser_ids:
+        result = api.delete_browser(browser_id)
+        success = result.get('success', False)
+        message = result.get('msg', '') if not success else ''
+        
+        if success:
+            success_count += 1
+        
+        if callback:
+            callback(browser_id, success, message)
+    
+    return success_count, len(browser_ids)
+
+
+def get_browser_info(browser_id: str) -> Optional[Dict]:
+    """
+    @brief 获取浏览器详情（简化版）
+    @param browser_id 窗口ID
+    @return 浏览器信息，失败返回None
+    """
+    result = get_api().get_browser_detail(browser_id)
+    if result.get('success'):
+        return result.get('data', {})
+    return None
+
+
+def get_next_window_name(prefix: str) -> str:
+    """
+    @brief 根据前缀生成下一个窗口名称，格式：前缀_序号
+    @param prefix 窗口名称前缀
+    @return 下一个窗口名称
+    """
+    browsers = get_browser_list_simple(page=0, page_size=1000)
+    
+    max_num = 0
+    for b in browsers:
+        name = b.get('name', '')
+        if name.startswith(f"{prefix}_"):
+            try:
+                num_part = name[len(prefix)+1:]
+                num = int(num_part)
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                pass
+    
+    return f"{prefix}_{max_num + 1}"
+
+
 if __name__ == "__main__":
     # 测试代码
     api = BitBrowserAPI()

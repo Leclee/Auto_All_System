@@ -16,13 +16,21 @@ try:
         openBrowser, 
         closeBrowser, 
         createBrowser, 
-        deleteBrowser
+        deleteBrowser,
+        # GUI便捷函数
+        get_browser_list_simple,
+        open_browsers_batch,
+        delete_browsers_batch,
+        get_browser_info,
+        get_next_window_name,
     )
     from .bit_playwright import google_login
 except ImportError as e:
     print(f"[core] 部分模块导入失败: {e}")
     BitBrowserAPI = None
     get_api = openBrowser = closeBrowser = createBrowser = deleteBrowser = None
+    get_browser_list_simple = open_browsers_batch = delete_browsers_batch = None
+    get_browser_info = get_next_window_name = None
     google_login = None
 
 __all__ = [
@@ -34,6 +42,10 @@ __all__ = [
     'closeBrowser', 
     'createBrowser',
     'deleteBrowser',
+    'get_browser_list_simple',
+    'open_browsers_batch',
+    'delete_browsers_batch',
+    'get_browser_info',
+    'get_next_window_name',
     'google_login',
 ]
-
