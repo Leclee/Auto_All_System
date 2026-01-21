@@ -10,36 +10,30 @@ from .database import DBManager
 
 # 可选导入（需要playwright等依赖）
 try:
-    from .bit_api import openBrowser, closeBrowser, get_api, createBrowser, deleteBrowser
+    from .bit_api import (
+        BitBrowserAPI, 
+        get_api,
+        openBrowser, 
+        closeBrowser, 
+        createBrowser, 
+        deleteBrowser
+    )
     from .bit_playwright import google_login
 except ImportError as e:
     print(f"[core] 部分模块导入失败: {e}")
-    openBrowser = closeBrowser = get_api = createBrowser = deleteBrowser = None
+    BitBrowserAPI = None
+    get_api = openBrowser = closeBrowser = createBrowser = deleteBrowser = None
     google_login = None
-
-# 导入比特浏览器API类
-from .bitbrowser_api import (
-    BitBrowserAPI, 
-    BitBrowserManager, 
-    BitBrowserAPIError,
-    ProxyType,
-    ProxyMethod,
-    IPCheckService
-)
 
 __all__ = [
     'Config',
-    'DBManager', 
+    'DBManager',
+    'BitBrowserAPI',
+    'get_api',
     'openBrowser', 
     'closeBrowser', 
-    'get_api',
     'createBrowser',
     'deleteBrowser',
     'google_login',
-    'BitBrowserAPI',
-    'BitBrowserManager',
-    'BitBrowserAPIError',
-    'ProxyType',
-    'ProxyMethod',
-    'IPCheckService',
 ]
+

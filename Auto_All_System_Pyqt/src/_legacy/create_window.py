@@ -1,8 +1,6 @@
 """
 创建比特浏览器新窗口
 根据示例窗口的参数创建新窗口，从accounts.txt读取账户信息
-
-已迁移到新API: 使用 bitbrowser_complete_api.py
 """
 import requests
 import json
@@ -12,21 +10,10 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from bitbrowser_api import BitBrowserAPI, BitBrowserManager
 
-# 比特浏览器API地址（兼容旧代码）
+# 比特浏览器API地址
 url = "http://127.0.0.1:54345"
 headers = {'Content-Type': 'application/json'}
-
-# 初始化新API实例（全局）
-_api_instance = None
-
-def get_api():
-    """获取API实例（单例模式）"""
-    global _api_instance
-    if _api_instance is None:
-        _api_instance = BitBrowserAPI()
-    return _api_instance
 
 
 def read_proxies(file_path: str = None) -> list:

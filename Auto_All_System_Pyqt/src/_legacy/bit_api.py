@@ -1,73 +1,89 @@
 import requests
 import json
 import time
-from bitbrowser_api import BitBrowserAPI
 
 # 官方文档地址
 # https://doc2.bitbrowser.cn/jiekou/ben-di-fu-wu-zhi-nan.html
 
-# 已迁移到 Auto_All_System 内部: apps/integrations/bitbrowser/
+# 此demo仅作为参考使用，以下使用的指纹参数仅是部分参数，完整参数请参考文档
 
 url = "http://127.0.0.1:54345"
 headers = {'Content-Type': 'application/json'}
 
-# 初始化新API实例（全局）
-_api_instance = None
 
-def get_api():
-    """获取API实例（单例模式）"""
-    global _api_instance
-    if _api_instance is None:
-        _api_instance = BitBrowserAPI()
-    return _api_instance
+def createBrowser():  # 创建或者更新窗口，指纹参数 browserFingerPrint 如没有特定需求，只需要指定下内核即可，如果需要更详细的参数，请参考文档
+    json_data = {
+        'name': 'google',  # 窗口名称
+        'remark': '',  # 备注
+        'proxyMethod': 2,  # 代理方式 2自定义 3 提取IP
+        # 代理类型  ['noproxy', 'http', 'https', 'socks5', 'ssh']
+        'proxyType': 'noproxy',
+        'host': '',  # 代理主机
+        'port': '',  # 代理端口
+        'proxyUserName': '',  # 代理账号
+        "browserFingerPrint": {  # 指纹对象
+            'coreVersion': '124'  # 内核版本，注意，win7/win8/winserver 2012 已经不支持112及以上内核了，无法打开
+        }
+    }
 
-
-def createBrowser():  # 创建或者更新窗口（使用新API）
     print("正在创建窗口...")
-    api = get_api()
-    result = api.create_browser(
-        name='google',
-        browser_fingerprint={'coreVersion': '130'},  # 使用更新的内核版本
-        remark=''
-    )
-    
-    if result['success']:
-        browserId = result['data']['id']
-        print(f"窗口创建成功，ID: {browserId}")
-        return browserId
-    else:
-        raise Exception(f"创建窗口失败: {result}")
+    res = requests.post(
+        f"{url}/browser/update",
+        json=json_data,
+        headers=headers,
+        timeout=10  # 添加10秒超时
+    ).json()
+    browserId = res['data']['id']
+    print(f"窗口创建成功，ID: {browserId}")
+    return browserId
 
 
-def updateBrowser():  # 更新窗口（使用新API）
-    api = get_api()
-    result = api.update_browser_partial(
-        ['93672cf112a044f08b653cab691216f0'],
-        {'remark': '我是一个备注'}
-    )
-    print(result)
+def updateBrowser():  # 更新窗口，支持批量更新和按需更新，ids 传入数组，单独更新只传一个id即可，只传入需要修改的字段即可，比如修改备注，具体字段请参考文档，browserFingerPrint指纹对象不修改，则无需传入
+    json_data = {'ids': ['93672cf112a044f08b653cab691216f0'],
+                 'remark': '我是一个备注', 'browserFingerPrint': {}}
+    res = requests.post(
+        f"{url}/browser/update/partial",
+        json=json_data,
+        headers=headers
+    ).json()
+    print(res)
 
 
-def openBrowser(id):  # 直接指定ID打开窗口（使用新API）
+def openBrowser(id):  # 直接指定ID打开窗口，也可以使用 createBrowser 方法返回的ID
+    json_data = {"id": f'{id}'}
     print(f"正在打开窗口 {id}...")
-    api = get_api()
-    result = api.open_browser(id, queue=True)
-    print(f"窗口打开响应: {result}")
-    return result
+    res = requests.post(
+        f"{url}/browser/open",
+        json=json_data,
+        headers=headers,
+        timeout=30  # 添加30秒超时
+    ).json()
+    print(f"窗口打开响应: {res}")
+    return res
 
 
-def closeBrowser(id):  # 关闭窗口（使用新API）
+def closeBrowser(id):  # 关闭窗口
+    json_data = {'id': f'{id}'}
     print(f"正在关闭窗口 {id}...")
-    api = get_api()
-    result = api.close_browser(id)
-    print(f"窗口关闭响应: {result}")
+    res = requests.post(
+        f"{url}/browser/close",
+        json=json_data,
+        headers=headers,
+        timeout=10  # 添加10秒超时
+    ).json()
+    print(f"窗口关闭响应: {res}")
 
 
-def deleteBrowser(id):  # 删除窗口（使用新API）
+def deleteBrowser(id):  # 删除窗口
+    json_data = {'id': f'{id}'}
     print(f"正在删除窗口 {id}...")
-    api = get_api()
-    result = api.delete_browser(id)
-    print(f"窗口删除响应: {result}")
+    res = requests.post(
+        f"{url}/browser/delete",
+        json=json_data,
+        headers=headers,
+        timeout=10  # 添加10秒超时
+    ).json()
+    print(f"窗口删除响应: {res}")
 
 
 if __name__ == '__main__':
