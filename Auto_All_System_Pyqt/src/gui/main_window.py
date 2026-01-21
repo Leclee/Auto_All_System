@@ -866,8 +866,97 @@ class MainWindow(QMainWindow):
     
     def _action_get_sheerlink(self):
         """一键获取SheerLink"""
-        self.log("开始获取SheerLink...")
-        # TODO: 实现获取逻辑
+        selected_ids = self._get_selected_browser_ids()
+        if not selected_ids:
+            QMessageBox.warning(self, "提示", "请先在列表中勾选要处理的窗口")
+            return
+        
+        msg = f"确定要对选中的 {len(selected_ids)} 个窗口执行 SheerID 提取吗？\n"
+        msg += "将依次打开浏览器、登录Google、检测学生资格并提取链接。"
+        
+        reply = QMessageBox.question(
+            self, '确认操作', msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        
+        self.log(f"\n开始提取SheerLink，共 {len(selected_ids)} 个窗口...")
+        
+        # 禁用按钮
+        self._stop_flag = False
+        self.btn_stop.setEnabled(True)
+        
+        try:
+            from google.backend.sheerlink_service import extract_sheerlink_batch
+            
+            stats = {
+                'link_unverified': 0,
+                'link_verified': 0,
+                'subscribed': 0,
+                'ineligible': 0,
+                'error': 0
+            }
+            
+            def on_result(browser_id, success, message):
+                if success:
+                    self.log(f"  ✅ {browser_id[:12]}...: {message}")
+                else:
+                    self.log(f"  ❌ {browser_id[:12]}...: {message}")
+                
+                # 统计分类
+                if "Verified" in message or "Get Offer" in message:
+                    stats['link_verified'] += 1
+                elif "Link Found" in message or "提取成功" in message:
+                    stats['link_unverified'] += 1
+                elif "Subscribed" in message or "已绑卡" in message:
+                    stats['subscribed'] += 1
+                elif "无资格" in message or "Not Available" in message:
+                    stats['ineligible'] += 1
+                else:
+                    stats['error'] += 1
+                
+                QApplication.processEvents()
+            
+            def stop_check():
+                return self._stop_flag
+            
+            # 执行批量提取
+            result = extract_sheerlink_batch(
+                browser_ids=selected_ids,
+                thread_count=1,  # 单线程，更稳定
+                callback=on_result,
+                stop_check=stop_check,
+                log_callback=lambda msg: self.log(f"  {msg}")
+            )
+            
+            # 显示统计报告
+            summary = (
+                f"\n📊 任务统计报告:\n"
+                f"--------------------------------\n"
+                f"🔗 有资格待验证:   {stats['link_unverified']}\n"
+                f"✅ 已过验证未绑卡: {stats['link_verified']}\n"
+                f"💳 已过验证已绑卡: {stats['subscribed']}\n"
+                f"❌ 无资格 (不可用): {stats['ineligible']}\n"
+                f"⏳ 超时/错误:      {stats['error']}\n"
+                f"--------------------------------\n"
+                f"总计处理: {result.get('processed', 0)}/{len(selected_ids)}"
+            )
+            self.log(summary)
+            
+            if self._stop_flag:
+                self.log("\n⚠️ 任务已被用户停止")
+            
+            self._refresh_browser_list()
+            
+        except Exception as e:
+            self.log(f"SheerLink提取失败: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            self.btn_stop.setEnabled(False)
+
     
     def _action_verify_sheerid(self):
         """打开SheerID验证窗口"""

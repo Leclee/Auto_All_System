@@ -8,6 +8,7 @@
 - sheerid_verifier: SheerID链接验证
 - google_auth: Google登录状态检测
 - google_login_service: Google登录服务
+- sheerlink_service: SheerLink提取服务
 """
 
 from .sheerid_verifier import SheerIDVerifier
@@ -26,6 +27,11 @@ from .google_login_service import (
     check_browser_login_status,
     quick_login_check,
 )
+from .sheerlink_service import (
+    SheerLinkService,
+    process_browser,
+    extract_sheerlink_batch,
+)
 
 # 待迁移的模块 - 目前从旧位置导入
 try:
@@ -36,11 +42,9 @@ try:
     if _legacy_dir not in sys.path:
         sys.path.insert(0, _legacy_dir)
     
-    from run_playwright_google import process_browser
     from auto_bind_card import auto_bind_card, check_and_login
 except ImportError as e:
     print(f"[google.backend] 部分模块导入失败: {e}")
-    process_browser = None
     auto_bind_card = check_and_login = None
 
 __all__ = [
@@ -48,6 +52,7 @@ __all__ = [
     'SheerIDVerifier',
     'AccountManager',
     'GoogleLoginService',
+    'SheerLinkService',
     # 登录状态
     'GoogleLoginStatus',
     'check_google_login_status',
@@ -59,8 +64,11 @@ __all__ = [
     'login_google_account',
     'check_browser_login_status',
     'quick_login_check',
+    # SheerLink服务
+    'process_browser',
+    'extract_sheerlink_batch',
     # 待迁移模块
-    'process_browser', 
     'auto_bind_card',
     'check_and_login',
 ]
+
