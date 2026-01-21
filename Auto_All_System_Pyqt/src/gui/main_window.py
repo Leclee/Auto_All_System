@@ -7,6 +7,13 @@
 import sys
 import os
 import time
+
+# 确保src目录在路径中（支持直接运行）
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_src_dir = os.path.dirname(_current_dir)
+if _src_dir not in sys.path:
+    sys.path.insert(0, _src_dir)
+
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QTextEdit, QPushButton, QMessageBox, QGroupBox,
@@ -16,7 +23,11 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QColor, QIcon
 
-from .base_window import resource_path, get_data_path
+# 使用绝对导入（支持直接运行和作为模块导入）
+try:
+    from gui.base_window import resource_path, get_data_path
+except ImportError:
+    from base_window import resource_path, get_data_path
 
 
 class MainWindow(QMainWindow):
