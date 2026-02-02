@@ -60,6 +60,24 @@ ChatGPT/Gemini/Grok 续费
 
 </td>
 </tr>
+<tr>
+<td align="center" width="20%">
+
+**📧 谷歌资格号批发**  
+8年高质量号 8.88元/个（10起批）
+
+👉 **[点击选购](https://pay.ldxp.cn/shop/CN45E47B)**
+
+</td>
+<td align="center" width="20%">
+</td>
+<td align="center" width="20%">
+</td>
+<td align="center" width="20%">
+</td>
+<td align="center" width="20%">
+</td>
+</tr>
 </table>
 
 ---
