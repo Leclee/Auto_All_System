@@ -804,6 +804,12 @@ data/cards.txt
 
 </div>
 
+### 💰 USDT 赞助
+
+| 网络 | 地址 |
+|------|------|
+| **TRON (TRC20)** | `TJUDyB9YKw55X7krmNMZXDYzod7rFa6sG1` |
+
 ---
 
 ## 💳 虚拟卡推荐
